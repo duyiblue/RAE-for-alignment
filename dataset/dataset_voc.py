@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Optional, Tuple
 from pathlib import Path
 import numpy as np
@@ -10,6 +11,10 @@ import matplotlib.pyplot as plt
 
 from .utils import overlay_image_mask, get_corruption_transforms
 
+# Add src directory to path to import cache helper
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from stage1.encoders import get_hf_cache_dir
+
 class VOCDataset(Dataset):
     def __init__(
         self,
@@ -18,12 +23,10 @@ class VOCDataset(Dataset):
         transform_source: Optional[A.Compose] = None,
         apply_mask: bool = True,
     ):
-        # Load VOC dataset from Hugging Face
-        hf_home_path = Path(__file__).resolve().parent.parent / "tmp" / "huggingface"  # Do not use "../tmp/huggingface", as it starts from CWD, not where this file is.
-        os.makedirs(hf_home_path, exist_ok=True)  # Create this directory if it doesn't exist.
-        os.environ["HF_HOME"] = str(hf_home_path)
-
-        self.ds = load_dataset("jxie/pascal-voc-2012")
+        # Load VOC dataset from Hugging Face using project-local cache
+        cache_dir = get_hf_cache_dir()
+        
+        self.ds = load_dataset("jxie/pascal-voc-2012", cache_dir=str(cache_dir))
         self.ds = self.ds[split]  # "train" or "val"
 
         self.transform_target = transform_target

@@ -2,7 +2,7 @@ from transformers import Dinov2WithRegistersModel
 from torch import nn
 import torch
 from math import *
-from . import register_encoder
+from . import register_encoder, get_hf_cache_dir
 
 
 @register_encoder()
@@ -13,11 +13,24 @@ class Dinov2withNorm(nn.Module):
         normalize: bool = True,
     ):
         super().__init__()
+        
+        # Set HuggingFace cache to project-local directory
+        cache_dir = get_hf_cache_dir()
+        
         # Support both local paths and HuggingFace model IDs
         try:
-            self.encoder = Dinov2WithRegistersModel.from_pretrained(dinov2_path, local_files_only=True)
+            self.encoder = Dinov2WithRegistersModel.from_pretrained(
+                dinov2_path, 
+                local_files_only=True,
+                cache_dir=str(cache_dir)
+            )
         except (OSError, ValueError, AttributeError):
-            self.encoder = Dinov2WithRegistersModel.from_pretrained(dinov2_path, local_files_only=False)
+            print(f"Downloading DINOv2 model to: {cache_dir}")
+            self.encoder = Dinov2WithRegistersModel.from_pretrained(
+                dinov2_path, 
+                local_files_only=False,
+                cache_dir=str(cache_dir)
+            )
         self.encoder.requires_grad_(False)
         if normalize:
             self.encoder.layernorm.elementwise_affine = False

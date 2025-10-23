@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 from math import *
-from . import register_encoder
+from . import register_encoder, get_hf_cache_dir
 from transformers import SiglipModel
 
 @register_encoder()
@@ -10,7 +10,11 @@ class SigLIP2wNorm(nn.Module):
         super().__init__()
         self.model_name = model_name
         self.num_tokens = num_tokens
-        self.model = SiglipModel.from_pretrained(self.model_name).vision_model
+        cache_dir = get_hf_cache_dir()
+        self.model = SiglipModel.from_pretrained(
+            self.model_name, 
+            cache_dir=str(cache_dir)
+        ).vision_model
         # remove the affine of final layernorm
         self.model.post_layernorm.elementwise_affine = False
         # remove the param

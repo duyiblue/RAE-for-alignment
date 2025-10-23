@@ -1,9 +1,18 @@
 """Encoder registry for stage 1 models."""
 
 from typing import Callable, Dict, Optional, Type, Union
+from pathlib import Path
 
 ARCHS: Dict[str, Type] = {}
-__all__ = ["ARCHS", "register_encoder"]
+__all__ = ["ARCHS", "register_encoder", "get_hf_cache_dir"]
+
+
+def get_hf_cache_dir() -> Path:
+    """Get the project-local HuggingFace cache directory."""
+    project_root = Path(__file__).parent.parent.parent.parent
+    cache_dir = project_root / "tmp" / "cache" / "huggingface"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
 
 def _add_to_registry(name: str, cls: Type) -> Type:

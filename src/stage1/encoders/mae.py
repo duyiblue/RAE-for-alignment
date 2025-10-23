@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 from math import *
-from . import register_encoder
+from . import register_encoder, get_hf_cache_dir
 from transformers import ViTMAEForPreTraining
 
 @register_encoder()
@@ -9,7 +9,11 @@ class MAEwNorm(nn.Module):
     def __init__(self, model_name:str):
         super().__init__()
         self.model_name = model_name
-        self.model = ViTMAEForPreTraining.from_pretrained(self.model_name).vit
+        cache_dir = get_hf_cache_dir()
+        self.model = ViTMAEForPreTraining.from_pretrained(
+            self.model_name, 
+            cache_dir=str(cache_dir)
+        ).vit
         # remove the affine of final layernorm
         self.model.layernorm.elementwise_affine = False
         # remove the param
