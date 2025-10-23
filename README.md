@@ -29,4 +29,5 @@ pip install matplotlib
 python -m pip install "numpy<2" --upgrade
 uv pip install --no-deps torchmetrics==1.3.1
 uv pip install --no-deps lightning-utilities
+uv pip install --no-deps "pytorch-lightning==2.2.*"
 ```
