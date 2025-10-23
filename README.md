@@ -27,4 +27,6 @@ pip install -U albumentations
 pip install -U datasets
 pip install matplotlib
 python -m pip install "numpy<2" --upgrade
+uv pip install --no-deps torchmetrics==1.3.1
+uv pip install --no-deps lightning-utilities
 ```

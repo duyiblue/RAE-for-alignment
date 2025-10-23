@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test script to reconstruct an arbitrary image using RAE encoder-decoder.
 Creates a side-by-side comparison of original and reconstructed images.
@@ -23,13 +22,6 @@ from utils.train_utils import parse_configs
 from stage1 import RAE
 
 from dataset.dataset_factory import get_alignment_dataloader
-
-
-def get_device(explicit: str | None) -> torch.device:
-    if explicit:
-        return torch.device(explicit)
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def load_image_from_path(image_path: Path) -> torch.Tensor:
     """Load image and convert to tensor."""
@@ -108,13 +100,9 @@ def main() -> None:
         default=None,
         help="Output path (default: outputs/<image_name>_comparison.png).",
     )
-    parser.add_argument(
-        "--device",
-        help="Torch device to use (e.g. cuda, cuda:1, cpu). Auto-detect if omitted.",
-    )
     args = parser.parse_args()
 
-    device = get_device(args.device)
+    device = torch.device("cuda")
     print(f"Using device: {device}")
 
     # Validate mutually exclusive options
