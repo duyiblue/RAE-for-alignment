@@ -10,6 +10,8 @@ Goal: Finetune a (source) encoder model, so that its output aligns with that of 
 We adopt the RAE codebase, where DINOv2 serves as the encoder. We can finetune it with LoRA. A key contribution of RAE is that it provides a decoder for DINOv2, which helps us with validation and visualization (how well our alignment is doing).
 
 ## Setup Guide
+Setup conda environment.
+
 ```
 conda create -n rae python=3.10 -y
 conda activate rae
@@ -30,4 +32,11 @@ python -m pip install "numpy<2" --upgrade
 uv pip install --no-deps torchmetrics==1.3.1
 uv pip install --no-deps lightning-utilities
 uv pip install --no-deps "pytorch-lightning==2.2.*"
+```
+
+Download pretrained models.
+```
+pip install huggingface_hub
+hf download nyu-visionx/RAE-collections \
+  --local-dir models 
 ```
