@@ -217,11 +217,14 @@ class AlignmentTrainer(pl.LightningModule):
             outputs['target_image'] if self.use_reconstruction_loss else None
         )
         
+        # Get actual batch size for proper metric aggregation (handles incomplete batches)
+        batch_size = batch['source_img'].shape[0]
+        
         # Logging
-        self.log('train/loss', loss_dict['total_loss'], prog_bar=True, logger=True)
+        self.log('train/loss', loss_dict['total_loss'], batch_size=batch_size, prog_bar=True, logger=True)
         for key, value in loss_dict.items():
             if key != 'total_loss' and key != 'recon_image':  # Skip non-scalar values
-                self.log(f'train/{key}', value, prog_bar=False, logger=True)
+                self.log(f'train/{key}', value, batch_size=batch_size, prog_bar=False, logger=True)
         
         return loss_dict['total_loss']
     
@@ -236,11 +239,14 @@ class AlignmentTrainer(pl.LightningModule):
             outputs['target_image']  # Always compute reconstruction loss in validation
         )
 
+        # Get actual batch size for proper metric aggregation (handles incomplete batches)
+        batch_size = batch['source_img'].shape[0]
+
         # Logging
-        self.log('val/loss', loss_dict['total_loss'], prog_bar=True, logger=True, sync_dist=True)
+        self.log('val/loss', loss_dict['total_loss'], batch_size=batch_size, prog_bar=True, logger=True, sync_dist=True)
         for key, value in loss_dict.items():
             if key != 'total_loss' and key != 'recon_image':  # Skip non-scalar values
-                self.log(f'val/{key}', value, prog_bar=False, logger=True, sync_dist=True)
+                self.log(f'val/{key}', value, batch_size=batch_size, prog_bar=False, logger=True, sync_dist=True)
         
         # Visualization: Decode source latent with target decoder
         if batch_idx == 0:  # Only visualize first batch
