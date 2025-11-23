@@ -33,8 +33,6 @@ def load_image_from_dataset(dataset: str = "voc") -> torch.Tensor:
     """Load an image from the dataset."""
     train_loader, _ = get_alignment_dataloader(
         dataset=dataset,
-        target_img_dim=(256, 256),
-        source_img_dim=(256, 256),
         batch_size=1,
     )
     batch = next(iter(train_loader))
@@ -75,7 +73,7 @@ def main() -> None:
         type=Path,
         default=Path("configs/stage1/pretrained/DINOv2-B.yaml"),
         help="Path to the YAML config with a stage_1 section.",
-    )
+    ) # For higher resolution, use configs/stage1/pretrained/DINOv2-B_512.yaml
     parser.add_argument(
         "--image",
         type=Path,

@@ -163,6 +163,15 @@ class AlignmentTrainer(pl.LightningModule):
         if target_image is not None:
             # Decode source latent with target decoder to get reconstruction
             recon_image = self.target_model.decode(source_latent)
+            
+            # Resize reconstruction to match target image size if needed
+            if recon_image.shape != target_image.shape:
+                recon_image = F.interpolate(
+                    recon_image,
+                    size=(target_image.shape[2], target_image.shape[3]),
+                    mode='bicubic',
+                    align_corners=False
+                )
 
             l1_loss = F.l1_loss(recon_image, target_image)
             l2_loss = F.mse_loss(recon_image, target_image)
@@ -236,12 +245,21 @@ class AlignmentTrainer(pl.LightningModule):
         # Visualization: Decode source latent with target decoder
         if batch_idx == 0:  # Only visualize first batch
             with torch.no_grad():
-                # Reuse the reconstruction already computed
+                # Reuse the reconstruction already computed (already resized in compute_loss)
                 source_via_target = loss_dict['recon_image']
                 
-                # Also decode target for comparison
+                # Also decode target for comparison (needs resize since it's a fresh decode)
                 target_latent = self.target_model.encode(outputs['target_image'])
                 target_recon = self.target_model.decode(target_latent)
+                
+                # Resize target reconstruction to match original target image size
+                if target_recon.shape != outputs['target_image'].shape:
+                    target_recon = F.interpolate(
+                        target_recon,
+                        size=(outputs['target_image'].shape[2], outputs['target_image'].shape[3]),
+                        mode='bicubic',
+                        align_corners=False
+                    )
             
             # Log images (first n samples)
             n_vis = min(self.visualize_first_n_samples, outputs['source_image'].shape[0])
@@ -317,14 +335,12 @@ def parse_arguments():
                         help='Path to source RAE model config (YAML with stage_1 section)')
     parser.add_argument('--target_config', type=str, required=True,
                         help='Path to target RAE model config (YAML with stage_1 section)')
+    # configs/stage1/pretrained/DINOv2-B_512.yaml
+    # This config supports 448x448 input image, which seems to be the highest available resolution for pretrained RAE
     
     # Data
     parser.add_argument('--dataset', type=str, default='voc', choices=['voc', 'robot'],
                         help='Dataset type: voc or robot')
-    parser.add_argument('--target_resolution', type=int, default=256,
-                        help='Target image resolution (height, width assumed square)')
-    parser.add_argument('--source_resolution', type=int, default=256,
-                        help='Source image resolution (height, width assumed square)')
     parser.add_argument('--apply_mask', action='store_true',
                         help='Apply mask overlay to source images (VOC dataset specific)')
     parser.add_argument('--corruption_severity', type=int, default=0,
@@ -390,8 +406,6 @@ def save_experiment_config(args, output_dir):
             'source_config': args.source_config,
             'target_config': args.target_config,
             'dataset': args.dataset,
-            'target_resolution': args.target_resolution,
-            'source_resolution': args.source_resolution,
             'apply_mask': args.apply_mask,
             'corruption_severity': args.corruption_severity,
             'batch_size': args.batch_size,
@@ -437,8 +451,6 @@ def main():
     print(f"Creating {args.dataset.upper()} datasets...")
     train_loader, val_loader = get_alignment_dataloader(
         dataset=args.dataset,
-        target_img_dim=(args.target_resolution, args.target_resolution),
-        source_img_dim=(args.source_resolution, args.source_resolution),
         batch_size=args.batch_size,
         apply_mask=args.apply_mask,
         corruption_severity=args.corruption_severity
@@ -525,8 +537,6 @@ def main():
         'recon_l2_loss_weight': args.recon_l2_loss_weight,
         'recon_ssim_loss_weight': args.recon_ssim_loss_weight,
         'recon_lpips_loss_weight': args.recon_lpips_loss_weight,
-        'target_resolution': args.target_resolution,
-        'source_resolution': args.source_resolution,
         'apply_mask': args.apply_mask,
         'corruption_severity': args.corruption_severity,
         'visualize_first_n_samples': args.visualize_first_n_samples,

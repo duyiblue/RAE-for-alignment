@@ -159,8 +159,6 @@ def main() -> None:
     print(f"Loading {args.dataset} dataset ({args.split} split)...")
     train_loader, val_loader = get_alignment_dataloader(
         dataset=args.dataset,
-        target_img_dim=(256, 256),
-        source_img_dim=(256, 256),
         batch_size=args.batch_size,
     )
     dataloader = train_loader if args.split == "train" else val_loader

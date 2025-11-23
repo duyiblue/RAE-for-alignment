@@ -71,8 +71,6 @@ class VOCDataset(Dataset):
         }
 
 def get_alignment_dataloader(
-    target_img_dim: Tuple[int, int], 
-    source_img_dim: Tuple[int, int], 
     batch_size: int=12, 
     apply_mask: bool=True, 
     corruption_severity: int=0
@@ -82,15 +80,18 @@ def get_alignment_dataloader(
     Currently we use VOC as the underlying dataset.
 
     Args:
-        target_img_dim (Tuple[int, int]): The input size of the images for the target model.
-        source_img_dim (Tuple[int, int]): The input size of the images for the source model.
         batch_size (int, optional): The batch size of the dataloader. Defaults to 12.
+        apply_mask (bool, optional): Whether to apply mask overlay. Defaults to True.
+        corruption_severity (int, optional): Severity of corruption transforms (0-5). Defaults to 0.
 
     Returns:
         Tuple[DataLoader, DataLoader]: The train and validation loader respectively.
+        
+    Note:
+        Images are returned at their original resolution. The RAE model handles resizing internally.
     """
-    transform_target = A.Compose([A.Resize(height=target_img_dim[0], width=target_img_dim[1])])
-    transform_source = get_corruption_transforms(source_img_dim, severity=corruption_severity)
+    transform_target = None
+    transform_source = get_corruption_transforms(severity=corruption_severity) if corruption_severity > 0 else None
 
     train_dataset = VOCDataset(split="train", transform_target=transform_target, transform_source=transform_source, apply_mask=apply_mask)
     val_dataset = VOCDataset(split="val", transform_target=transform_target, transform_source=transform_source, apply_mask=apply_mask)
@@ -104,8 +105,6 @@ def get_alignment_dataloader(
 # To run the test, run `python -m dataset.dataset_voc` in the codebase's root.
 if __name__ == "__main__":
     train_dataloader, val_dataloader = get_alignment_dataloader(
-        target_img_dim=(224, 224),
-        source_img_dim=(224, 224),
         batch_size=12,
         apply_mask=True,
         corruption_severity=0,

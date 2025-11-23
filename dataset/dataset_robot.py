@@ -19,6 +19,7 @@ class RobotDataset(Dataset):
         transform_source: Optional[A.Compose] = None,
         split: str = "train",
         seed: int = 42,
+        verbose: bool = False,
     ):
         self.target_path = target_path
         self.source_path = source_path
@@ -36,6 +37,14 @@ class RobotDataset(Dataset):
 
         target_image_files = sorted(target_image_files)
         source_image_files = sorted(source_image_files)
+
+        if verbose:
+            print("Loaded source and target images")
+            print(f"Number of image pairs found: {len(target_image_files)}")
+            print(f"Example pairs:")
+            for i in range(min(10, len(target_image_files))):
+                print(f"    {target_image_files[i]} -> {source_image_files[i]}")
+            print("-" * 50)
 
         # random shuffle while preserving pairing
         np.random.seed(seed)
@@ -98,43 +107,42 @@ class RobotDataset(Dataset):
         }
 
 def get_alignment_dataloader(
-    target_img_dim: Tuple[int, int],
-    source_img_dim: Tuple[int, int],
-    batch_size: int=12
+    batch_size: int=12,
+    verbose: bool = False,
 ) -> Tuple[DataLoader, DataLoader]:
     """
     Get the dataloaders for alignment training using robot data.
     Currently uses hardcoded robot data paths.
 
     Args:
-        target_img_dim (Tuple[int, int]): The input size of the images for the target model.
-        source_img_dim (Tuple[int, int]): The input size of the images for the source model.
         batch_size (int, optional): The batch size of the dataloader. Defaults to 12.
 
     Returns:
         Tuple[DataLoader, DataLoader]: The train and validation loader respectively.
+        
+    Note:
+        Images are returned at their original resolution. The RAE model handles resizing internally.
     """
     # Hardcoded robot data paths
-    target_path = "/orion/u/duyi/cross-emb/dinov2-finetune/data/home/yufeiding/projects/RoboVerseCrossEmb/retarget_data/franka_to_sawyer/CloseBox/images/franka"
-    source_path = "/orion/u/duyi/cross-emb/dinov2-finetune/data/home/yufeiding/projects/RoboVerseCrossEmb/retarget_data/franka_to_sawyer/CloseBox/images/sawyer"
+    target_path = "/data/yidu/RoboVerse50/outputs_close_box_franka_sawyer/images/franka"
+    source_path = "/data/yidu/RoboVerse50/outputs_close_box_franka_sawyer/images/sawyer"
     
-    # Create transforms for resizing (no corruption for robot data)
-    transform_target = A.Compose([A.Resize(height=target_img_dim[0], width=target_img_dim[1])])
-    transform_source = A.Compose([A.Resize(height=source_img_dim[0], width=source_img_dim[1])])
-    
+    # No transforms - model handles resizing internally
+    if verbose:
+        print("Loading train dataset...")
     train_dataset = RobotDataset(
         target_path=target_path,
         source_path=source_path,
-        transform_target=transform_target,
-        transform_source=transform_source,
         split="train",
+        verbose=verbose,
     )
+    if verbose:
+        print("Loading val dataset...")
     val_dataset = RobotDataset(
         target_path=target_path,
         source_path=source_path,
-        transform_target=transform_target,
-        transform_source=transform_source,
         split="val",
+        verbose=verbose,
     )
     
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True, shuffle=True, num_workers=4)
@@ -144,9 +152,8 @@ def get_alignment_dataloader(
 
 if __name__ == "__main__":
     train_dataloader, val_dataloader = get_alignment_dataloader(
-        target_img_dim=(256, 256),
-        source_img_dim=(224, 224),
         batch_size=12,
+        verbose=True,
     )
     
     batch = next(iter(train_dataloader))
