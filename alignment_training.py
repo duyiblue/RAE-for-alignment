@@ -479,7 +479,7 @@ def main():
     # Setup callbacks
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         dirpath=output_dir / 'checkpoints',
-        filename='best-{epoch:03d}-{val/loss:.4f}',
+        filename='best-epoch={epoch:03d}-val_loss={val/loss:.4f}',
         monitor='val/loss',
         mode='min',
         save_top_k=1,  # Only save the best checkpoint
