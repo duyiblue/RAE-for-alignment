@@ -55,7 +55,7 @@ class RobotDataset(Dataset):
         target_image_files = [target_image_files[i] for i in indices]
         source_image_files = [source_image_files[i] for i in indices]
 
-        train_size = int(len(target_image_files) * 0.8)
+        train_size = int(len(target_image_files) * 0.95)
         val_size = len(target_image_files) - train_size
 
         if split == "train":
@@ -124,8 +124,8 @@ def get_alignment_dataloader(
         Images are returned at their original resolution. The RAE model handles resizing internally.
     """
     # Hardcoded robot data paths
-    target_path = "/data/yidu/RoboVerse50/outputs_close_box_franka_sawyer/images/franka"
-    source_path = "/data/yidu/RoboVerse50/outputs_close_box_franka_sawyer/images/sawyer"
+    target_path = "/data/yidu/RoboVerse50/cross_emb_data/close_box_franka_sawyer/images_256x256_seed2/franka"
+    source_path = "/data/yidu/RoboVerse50/cross_emb_data/close_box_franka_sawyer/images_256x256_seed2/sawyer"
     
     # No transforms - model handles resizing internally
     if verbose:
